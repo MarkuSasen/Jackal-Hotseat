@@ -226,7 +226,9 @@ void Ship::add(Pirate *pirate) {
    {
        pirates.push_back(pirate);
        pirate->setSTATE(ONSHIP);
-       pirate->move(getPos(), FORCEMOVE);
+       pirate->setPreviousPos(pirate->getPos());
+       pirate->setPos(getPos());
+
 
        for(auto &e : pirate->getInventory())
        {

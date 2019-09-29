@@ -223,15 +223,38 @@ tile_action::tile_action(Tile *t,_CELL* cell) : t(t),_cell(cell), used(false){
     t->setMultiplePirates(false);
 }
 
-void tile_action::operator()(Pirate *pir) {
+int tile_action::operator()(Pirate *pir) {
     if(!pir)
-        return;
+        return 1;
+    Tile *prevtile = &_cell->getCoordCell()[pir->getPreviousPos()];
 
     auto e_count = std::count_if(_pirates.begin(),_pirates.end(),[&pir](Pirate* p)
                            {
                                return p->Player->getID() != pir->Player->getID();
                            }
     );
+
+
+//    if(e_count) cout << e_count << " enemy pirates\n";
+
+    if(t->isAllowFight() && t->isMultiplePirates())
+    {
+        if(e_count)
+        {
+            cout << "Fight!\n";
+            for(auto &e : _pirates) {
+
+                if(e->Player->getID() == pir->Player->getID()) continue;
+
+                e->drop(*t);
+                Tile *_prevtile = &_cell->getCoordCell()[e->getPreviousPos()];
+                    _prevtile->removePir(e);
+
+                e->Player->kill(e);
+                e_count = 0;
+            }
+        }
+    }
 
     if(!t->isMultiplePirates())
     {
@@ -241,41 +264,19 @@ void tile_action::operator()(Pirate *pir) {
 
             if(std::find(killable.begin(),killable.end(),_cell->getCoordCell()[true_prev].getTiletype()) != killable.end())
             {
-//                Tile *prevtile = &_cell->getCoordCell()[pir->getPreviousPos()];
-//                if(prevtile->hasPirate(pir))
-//                    prevtile->A->_pirates.erase(find(prevtile->A->_pirates.begin(),prevtile->A->_pirates.end(),pir));
+                prevtile->removePir(pir);
 
-                pir->Player->kill(pir);
-                return;
+                pir->Player->remove(pir);
+                return 1;
             }
-
-            pir->move(pir->getPreviousPos(),FORCEMOVE);
-            pir->setPreviousPos(true_prev);
-            pir->setCanmove(true);
-
-            return;
-        }
-    }
-
-    if(t->isAllowFight())
-    {
-        if(e_count)
-        {
-            for(auto &e : _pirates) {
-
-                if(e->Player->getID() == pir->Player->getID()) continue;
-
-                e->drop(*t);
-
-                Tile *prevtile = &_cell->getCoordCell()[e->getPreviousPos()];
-                if(prevtile->hasPirate(e))
-                    prevtile->A->_pirates.erase(find(prevtile->A->_pirates.begin(),prevtile->A->_pirates.end(),e));
-
-                e->Player->kill(e);
-
+            else {
+                pir->setPos(true_prev);
+                pir->setPreviousPos(prevtile->A->last_position);
+                return 1;
             }
         }
     }
+
 
     if(!t->isAllowCoins())
     {
@@ -298,30 +299,29 @@ void tile_action::operator()(Pirate *pir) {
         last_position = pir->getPreviousPos();
     }
 
-    Tile *prevtile = &_cell->getCoordCell()[pir->getPreviousPos()];
-        if(prevtile->hasPirate(pir))
-            prevtile->A->_pirates.erase(find(prevtile->A->_pirates.begin(),prevtile->A->_pirates.end(),pir));
+    prevtile->removePir(pir);
 
     for (auto &e : pir->Player->getPirates())
         e->setCanmove(false);
 
-        pir->Player->getShip()->setCanmove(false);
+    pir->Player->getShip()->setCanmove(false);
 
-        pir->setSTATE(PIR_STATE);
+    pir->setSTATE(PIR_STATE);
 
+    return 0;
 }
 
 void tile_action::update()
 {}
 
 void tile_action::operator=(tile_action &tile) {
-    _cell = tile._cell;
-    _pirates = tile._pirates;
-    last_position = tile.last_position;
-    std::cout << t << " -> ";
-    this->t = tile.t;
-    std::cout << t << std::endl;
-    used = tile.used;
+//    _cell = tile._cell;
+//    _pirates = tile._pirates;
+//    last_position = tile.last_position;
+//    std::cout << t << " -> ";
+//    this->t = tile.t;
+//    std::cout << t << std::endl;
+//    used = tile.used;
 }
 
 ////////////////////////////////////
@@ -329,15 +329,16 @@ void tile_action::operator=(tile_action &tile) {
 REGULAR_ACTION::REGULAR_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
 {
     t->setAllowCoins(true);
-    t->setMultiplePirates(false);
+    t->setMultiplePirates(true);
     t->setAllowFight(true);
     t->setAllowDrop(true);
 }
 
-void REGULAR_ACTION::operator()(Pirate *pir)
+int REGULAR_ACTION::operator()(Pirate *pir)
 {
     tile_action::operator()(pir);
     //std::cout << "REGULAR_ACTION\n";
+    return 0;
 }
 
 void REGULAR_ACTION::update()
@@ -353,7 +354,7 @@ HORSE_ACTION::HORSE_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
     t->setAllowDrop(false);
 }
 
-void HORSE_ACTION::operator()(Pirate *pir)
+int HORSE_ACTION::operator()(Pirate *pir)
 {
     tile_action::operator()(pir);
     pir->setCanmove(true);
@@ -375,7 +376,7 @@ ICE_ACTION::ICE_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
     t->setAllowDrop(false);
 }
 
-void ICE_ACTION::operator()(Pirate *pir) {
+int ICE_ACTION::operator()(Pirate *pir) {
 
     if(pir->getSTATE() == HORSE_STATE)
     {
@@ -412,7 +413,7 @@ ARROWS::ARROWS(Tile *t, _CELL *cell) : tile_action(t, cell), rotated(0), rotate(
     t->setAllowDrop(false);
 }
 
-void ARROWS::operator()(Pirate *pir) {
+int ARROWS::operator()(Pirate *pir) {
     if(!rotated) {
         std::srand(std::chrono::system_clock::now().time_since_epoch().count());
         rotate = std::rand() % 4;
@@ -482,12 +483,12 @@ void ARROWS::update() {}
 RUMBARREL_ACTION::RUMBARREL_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
 {
     t->setAllowCoins(true);
-    t->setMultiplePirates(false);
+    t->setMultiplePirates(true);
     t->setAllowFight(true);
     t->setAllowDrop(true);
 }
 
-void RUMBARREL_ACTION::operator()(Pirate *pir) {
+int RUMBARREL_ACTION::operator()(Pirate *pir) {
     tile_action::operator()(pir);
     //zapoy.push_back(pir);
 }
@@ -511,12 +512,12 @@ void RUMBARREL_ACTION::update() {
 TRAP_ACTION::TRAP_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell), _trapped(nullptr)
 {
     t->setAllowCoins(true);
-    t->setMultiplePirates(false);
+    t->setMultiplePirates(true);
     t->setAllowFight(true);
     t->setAllowDrop(true);
 }
 
-void TRAP_ACTION::operator()(Pirate *pir) {
+int TRAP_ACTION::operator()(Pirate *pir) {
     tile_action::operator()(pir);
     if(_trapped)
         if(pir->Player->getID() == _trapped->Player->getID())
@@ -543,57 +544,112 @@ VERTEX::VERTEX(Tile *t, int turns, _CELL *cell) : tile_action(t, cell), _turns(t
     t->setMultiplePirates(true);
     t->setAllowFight(false);
     t->setAllowDrop(true);
+    _trapped.clear();
 }
 
-void VERTEX::operator()(Pirate *pir) {
-    pir->setPreviousPos(pir->getPos());
-    tile_action::operator()(pir);
 
-    multimap<_position , Pirate*>::iterator pir_iter = _trapped.end();
+//баг вертушки, пираты не выходят
 
-    for(int i = 1; i <= _turns; i++){
-        auto e = _trapped.lower_bound(static_cast<_position >(i));
-        for(auto c = e; c != _trapped.upper_bound(static_cast<_position >(i)); c++) {
-            cout << (*c).first << " " << (*c).second->getId() << "\n";
-            if ((*c).second == pir) {
-                pir_iter = c;
+int VERTEX::operator()(Pirate *pir) {
+    if (tile_action::operator()(pir))
+        return 1;
+
+    auto pir_iter = _trapped.end();
+
+    for (auto i = 1; i <= _turns; i++) {
+        auto i_range = _trapped.equal_range(static_cast<VERTEX::_position>(i));
+        for (auto j = i_range.first; j != i_range.second && j != _trapped.end(); j++) {
+            if (j->second == pir) {
+                pir_iter = j;
                 break;
             }
         }
+        if (pir_iter != _trapped.end()) break;
     }
 
-    if(pir_iter == _trapped.end())
-    {
-        _trapped.insert((make_pair(I,pir)));
-    }else {
-        _position temp = (*pir_iter).first;
-        _trapped.erase(pir_iter);
 
-        if(temp+1 <= _turns)
-            pir_iter = _trapped.insert(make_pair(static_cast<_position>(temp+1), pir));
-        else {
-            pir->setSTATE(PIR_STATE);
-            return;
-        }
+    if (pir_iter != _trapped.end()) {
+            //auto i_range = _trapped.equal_range(pir_iter->first);
+            if((int) pir_iter->first + 1 > _turns)
+            {
+                pir_iter->second->setSTATE(PIR_STATE);
+                _trapped.erase(pir_iter);
+                return -1;
+            }
+
+            auto prep2die = _trapped.equal_range(static_cast<VERTEX::_position>(((int) pir_iter->first) + 1));
+            for (auto c = prep2die.first; c != prep2die.second && c != _trapped.end();)
+                if (c->second->Player->getID() != pir->Player->getID()) {
+                    c->second->drop(*t);
+                    c->second->Player->kill(c->second);
+                    t->removePir(c->second);
+                    c = _trapped.erase(c);
+                } else c++;
+
+                cout << pir_iter->second->getId() << " : " << (int) pir_iter->first;
+
+                if (static_cast<int>(pir_iter->first + 1) <= _turns) {
+                    _trapped.insert(make_pair(static_cast<VERTEX::_position>(((int)pir_iter->first) + 1), pir));
+                    cout << " -> " << pir_iter->first + 1 << endl;
+                } else pir->setSTATE(PIR_STATE);
+
+                _trapped.erase(pir_iter);
+    }
+    else{
+        _trapped.insert(make_pair(I,pir));
+        cerr << pir->getId() << " trapped\n";
+        auto e = _trapped.equal_range(I);
+            for(auto c = e.first; c != e.second && c != _trapped.end(); )
+                if(c->second->Player->getID() != pir->Player->getID()){
+                    c->second->drop(*t);
+                    c->second->Player->kill(c->second);
+                    t->removePir(c->second);
+                    c = _trapped.erase(c);
+                } else c++;
     }
 
-    auto range = _trapped.equal_range((*pir_iter).first);
-
-    for(auto i = range.first; i != range.second; i++){
-        cout << (*i).second << " \n";
-        if((*i).second->Player->getID() != pir->Player->getID())
-        {
-            (*i).second->Player->kill((*i).second);
-            _trapped.erase(i);
-        }
-    }
-
-    pir->setSTATE(VERTEX_STATE);
-
+//    for(int i = 1; i <= _turns; i++){
+//        auto e = _trapped.lower_bound(static_cast<_position >(i));
+//        for(auto c = e; c != _trapped.upper_bound(static_cast<_position >(i)); c++) {
+//
+//            if (c->second == pir) {
+//                pir_iter = c;
+//                break;
+//            }
+//        }
+//    }
+//
+//    if(pir_iter == _trapped.end())
+//    {
+//        _trapped.insert((make_pair(I,pir)));
+//    }else {
+//        _position temp = (*pir_iter).first;
+//        _trapped.erase(pir_iter);
+//
+//        if(temp+1 <= _turns)
+//            pir_iter = _trapped.insert(make_pair(static_cast<_position>(temp+1), pir));
+//        else {
+//            pir->setSTATE(PIR_STATE);
+//            return;
+//        }
+//    }
+//
+//    auto range = _trapped.equal_range((*pir_iter).first);
+//
+//    for(auto i = range.first; i != range.second; i++){
+//        cout << (*i).second << " \n";
+//        if((*i).second->Player->getID() != pir->Player->getID())
+//        {
+//            (*i).second->Player->kill((*i).second);
+//            _trapped.erase(i);
+//        }
+//    }
+    return 0;
 }
 
 void VERTEX::update() {
-
+    for(auto &e : _trapped)
+        e.second->setSTATE(VERTEX_STATE);
 }
 
 void VERTEX::use_rum(Pirate *pir) {
@@ -619,7 +675,7 @@ CROCO_ACTION::CROCO_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
     t->setAllowDrop(false);
 }
 
-void CROCO_ACTION::operator()(Pirate *pir) {
+int CROCO_ACTION::operator()(Pirate *pir) {
 
     tile_action::operator()(pir);
 
@@ -629,7 +685,7 @@ void CROCO_ACTION::operator()(Pirate *pir) {
     {
         _pirates.erase(find(_pirates.begin(),_pirates.end(), pir));
         pir->Player->remove(pir);
-        return;
+        return 2;
     }
     std::pair<int,int> prev = pir->getPreviousPos();
     pir->move(prev,FORCEMOVE);
@@ -648,7 +704,7 @@ CANNIBAL_ACTION::CANNIBAL_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
     t->setAllowDrop(false);
 }
 
-void CANNIBAL_ACTION::operator()(Pirate *pir) {
+int CANNIBAL_ACTION::operator()(Pirate *pir) {
     tile_action::operator()(pir);
 
     _pirates.erase(find(_pirates.begin(),_pirates.end(),pir));
@@ -664,25 +720,26 @@ CASTLE_ACTION::CASTLE_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
 {
     t->setAllowCoins(false);
     t->setMultiplePirates(false);
-    t->setAllowFight(false);
+    t->setAllowFight(true);
     t->setAllowDrop(false);
 }
 
-void CASTLE_ACTION::operator()(Pirate *pir) {
+int CASTLE_ACTION::operator()(Pirate *pir) {
 
     tile_action::operator()(pir);
 
-    if(count_if(_pirates.begin(),_pirates.end(),[&pir](Pirate * _p)
-    {
-       return _p->Player->getID() != pir->Player->getID();
-    }))
-    {
-        pir->Player->remove(pir);
-        return;
-    }
+//    if(count_if(_pirates.begin(),_pirates.end(),[&pir](Pirate * _p)
+//    {
+//       return _p->Player->getID() != pir->Player->getID();
+//    }))
+//    {
+//        pir->Player->remove(pir);
+//        return;
+//    }
 }
 
-void CASTLE_ACTION::update() {
+void CASTLE_ACTION::update()
+{
 
 }
 
@@ -693,21 +750,21 @@ ABORIGINAL_ACTION::ABORIGINAL_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell
 {
     t->setAllowCoins(false);
     t->setMultiplePirates(false);
-    t->setAllowFight(false);
+    t->setAllowFight(true);
     t->setAllowDrop(false);
 }
 
-void ABORIGINAL_ACTION::operator()(Pirate *pir) {
+int ABORIGINAL_ACTION::operator()(Pirate *pir) {
     tile_action::operator()(pir);
 
-    if(count_if(_pirates.begin(),_pirates.end(),[&pir](Pirate * _p)
-    {
-        return _p->Player->getID() != pir->Player->getID();
-    }))
-    {
-        pir->Player->remove(pir);
-        return;
-    }
+//    if(count_if(_pirates.begin(),_pirates.end(),[&pir](Pirate * _p)
+//    {
+//        return _p->Player->getID() != pir->Player->getID();
+//    }))
+//    {
+//        pir->Player->remove(pir);
+//        return;
+//    }
 
     if(pir->Player->getPirates().size() < 3)
     {
@@ -737,7 +794,7 @@ BALLOON_ACTION::BALLOON_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
     t->setAllowDrop(false);
 }
 
-void BALLOON_ACTION::operator()(Pirate *pir) {
+int BALLOON_ACTION::operator()(Pirate *pir) {
     tile_action::operator()(pir);
 
     _pirates.erase(find(_pirates.begin(),_pirates.end(),pir));
@@ -755,17 +812,17 @@ void BALLOON_ACTION::update() {
 PLANE_ACTION::PLANE_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell),triggered(false),capacity(0)
 {
     t->setAllowCoins(true);
-    t->setMultiplePirates(false);
+    t->setMultiplePirates(true);
     t->setAllowFight(true);
     t->setAllowDrop(true);
 }
 
-void PLANE_ACTION::operator()(Pirate *pir) {
+int PLANE_ACTION::operator()(Pirate *pir) {
 
     tile_action::operator()(pir);
 
     if(used)
-        return;
+        return 2;
 
     triggered = true;
     pir->setSTATE(PLANE_STATE);
@@ -799,14 +856,14 @@ void PLANE_ACTION::update() {
 RUM_ACTION::RUM_ACTION(Tile *t, _CELL *cell, int amount) : tile_action(t, cell), _amount(amount)
 {
     t->setAllowCoins(true);
-    t->setMultiplePirates(false);
+    t->setMultiplePirates(true);
     t->setAllowFight(true);
     t->setAllowDrop(true);
 }
 
-void RUM_ACTION::operator()(Pirate *pir) {
+int RUM_ACTION::operator()(Pirate *pir) {
     tile_action::operator()(pir);
-    if(used) return;
+    if(used) return 2;
 
     for ( int i = 0; i < _amount; i++)
         pir->Player->addrum();
@@ -823,16 +880,16 @@ void RUM_ACTION::update() {
 EARTHQUAKE_ACTION::EARTHQUAKE_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
 {
     t->setAllowCoins(true);
-    t->setMultiplePirates(false);
+    t->setMultiplePirates(true);
     t->setAllowFight(true);
     t->setAllowDrop(true);
 }
 
-void EARTHQUAKE_ACTION::operator()(Pirate *pir) {
+int EARTHQUAKE_ACTION::operator()(Pirate *pir) {
     tile_action::operator()(pir);
 
     if(used)
-        return;
+        return 2;
 
     pir->setSTATE(ONSHIP);
     pir->setCanmove(true);
@@ -850,15 +907,15 @@ void EARTHQUAKE_ACTION::update() {
 GALEON_ACTION::GALEON_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
 {
     t->setAllowCoins(true);
-    t->setMultiplePirates(false);
+    t->setMultiplePirates(true);
     t->setAllowFight(true);
     t->setAllowDrop(true);
 }
 
-void GALEON_ACTION::operator()(Pirate *pir) {
+int GALEON_ACTION::operator()(Pirate *pir) {
     tile_action::operator()(pir);
     if(used)
-        return;
+        return 2;
 
     (*_cell)[pir->getPos()].addItem(new GALEON());
     used = true;
@@ -882,7 +939,7 @@ CAVE_ACTION::CAVE_ACTION(Tile *t, _CELL *cell) : tile_action(t,cell), exit1(null
 
 }
 
-void CAVE_ACTION::operator()(Pirate *pir) {
+int CAVE_ACTION::operator()(Pirate *pir) {
     tile_action::operator()(pir);
 
     if(!used)
@@ -912,11 +969,11 @@ void CAVE_ACTION::operator()(Pirate *pir) {
                 && exit1->getPirates().front()->Player->getID() != pir->Player->getID()
         && !exit2->getPirates().empty()
             && exit2->getPirates().front()->Player->getID() != pir->Player->getID())
-                return;
+                return 3;
 
         pir->setSTATE(ONSHIP);
         pir->setCanmove(true);
-        return;
+        return 0;
 
     }else if(!exit1->isHidden() && exit2->isHidden())
     {
@@ -926,7 +983,7 @@ void CAVE_ACTION::operator()(Pirate *pir) {
                                                     pir->Player->getID())
             {
                 pir->move(e1,FORCEMOVE);
-            } else return;
+            } else return 0;
         } else pir->move(e1,FORCEMOVE);
 
     }else if(!exit2->isHidden() && exit1->isHidden())
@@ -937,7 +994,7 @@ void CAVE_ACTION::operator()(Pirate *pir) {
                pir->Player->getID())
             {
                 pir->move(e2,FORCEMOVE);
-            } else return;
+            } else return 0;
         } else pir->move(e2,FORCEMOVE);
     }
 }
@@ -955,16 +1012,16 @@ WEED_ACTION::WEED_ACTION(Tile *t, _CELL *cell, SHAKAL *field): tile_action(t, ce
                                                                _field(field), _turn(0)
 {
     t->setAllowCoins(true);
-    t->setMultiplePirates(false);
+    t->setMultiplePirates(true);
     t->setAllowFight(true);
     t->setAllowDrop(true);
 }
 
-void WEED_ACTION::operator()(Pirate *pir) {
+int WEED_ACTION::operator()(Pirate *pir) {
 #define P(C) _field->PLAYERS[C]
 
     tile_action::operator()(pir);
-    if(used) return;
+    if(used) return 2;
 
     used = true;
 
@@ -1017,15 +1074,15 @@ void WEED_ACTION::update() {
 GOLD_ACTION::GOLD_ACTION(Tile *t, _CELL *cell, int num) : tile_action(t, cell), _num(num)
 {
     t->setAllowCoins(true);
-    t->setMultiplePirates(false);
+    t->setMultiplePirates(true);
     t->setAllowFight(true);
     t->setAllowDrop(true);
 }
 
-void GOLD_ACTION::operator()(Pirate *pir) {
+int GOLD_ACTION::operator()(Pirate *pir) {
     tile_action::operator()(pir);
 
-    if(used) return;
+    if(used) return 2;
 
     used = true;
     cout << "spawned " << _num << endl;
@@ -1042,16 +1099,16 @@ void GOLD_ACTION::update() {
 BEACON_ACTION::BEACON_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
 {
     t->setAllowCoins(true);
-    t->setMultiplePirates(false);
+    t->setMultiplePirates(true);
     t->setAllowFight(true);
     t->setAllowDrop(true);
 }
 
-void BEACON_ACTION::operator()(Pirate *pir) {
+int BEACON_ACTION::operator()(Pirate *pir) {
     tile_action::operator()(pir);
 
     if(used)
-        return;
+        return 2;
     used = true;
 
     pir->setSTATE(ONSHIP);
@@ -1066,15 +1123,15 @@ void BEACON_ACTION::update() {
 
 JUNGLE_ACTION::JUNGLE_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
 {
-    t->setAllowCoins(true);
+    t->setAllowCoins(false);
     t->setMultiplePirates(true);
-    t->setAllowFight(true);
-    t->setAllowDrop(true);
+    t->setAllowFight(false);
+    t->setAllowDrop(false);
 }
 
 
-void JUNGLE_ACTION::operator()(Pirate *pir) {
-
+int JUNGLE_ACTION::operator()(Pirate *pir) {
+    tile_action::operator()(pir);
 }
 
 

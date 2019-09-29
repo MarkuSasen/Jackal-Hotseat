@@ -71,7 +71,7 @@ struct tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
     virtual void operator=(tile_action &tile);
 
@@ -88,7 +88,7 @@ struct REGULAR_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
 };
 
@@ -97,7 +97,7 @@ struct HORSE_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
 };
 
@@ -106,7 +106,7 @@ struct ICE_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 };
 
 struct ARROWS : public tile_action {
@@ -114,7 +114,7 @@ struct ARROWS : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
     int rotate;
     bool rotated;
@@ -127,7 +127,7 @@ struct RUMBARREL_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
     //std::list<Pirate *> zapoy;
 };
@@ -137,10 +137,10 @@ struct TRAP_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
     Pirate *_trapped;
-    Pirate *_halped;
+   // Pirate *_halped;
 };
 
 
@@ -149,12 +149,12 @@ struct VERTEX : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
     void use_rum(Pirate *pir);
 
 
-    enum _position {
+    enum _position : int {
         I = 1, II = 2, III = 3, IV = 4, V = 5
     };
     int _turns;
@@ -168,7 +168,7 @@ struct CROCO_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 };
 
 struct CANNIBAL_ACTION : public tile_action {
@@ -176,7 +176,7 @@ struct CANNIBAL_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
 };
 
@@ -185,7 +185,7 @@ struct CASTLE_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
 };
 
@@ -194,7 +194,7 @@ struct ABORIGINAL_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
     bool voskreshaem;
 };
@@ -205,7 +205,7 @@ struct BALLOON_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 };
 
 
@@ -214,7 +214,7 @@ struct PLANE_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
     bool triggered, used;
     int capacity;
@@ -225,7 +225,7 @@ struct RUM_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
     int _amount;
 };
@@ -235,7 +235,7 @@ struct EARTHQUAKE_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 };
 
 
@@ -244,7 +244,7 @@ struct GALEON_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
 };
 
@@ -254,7 +254,7 @@ struct CAVE_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
     Tile *exit1, *exit2;
     std::pair<int,int> e1,e2;
@@ -267,7 +267,7 @@ struct WEED_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
     SHAKAL *_field;
     player *_stepped;
@@ -281,7 +281,7 @@ struct GOLD_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 
     int _num;
 };
@@ -292,7 +292,7 @@ struct BEACON_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 };
 
 
@@ -301,7 +301,7 @@ struct JUNGLE_ACTION : public tile_action {
 
     virtual void update();
 
-    virtual void operator()(Pirate *pir);
+    virtual int operator()(Pirate *pir);
 };
 
 class Tile : public sf::Drawable {

@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.12)
 project(shakalaka)
 
+
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+
 
 set(SOURCE Sbasic.cpp units.cpp Field.cpp SHAKAL.cpp player.cpp GUI.cpp)
 

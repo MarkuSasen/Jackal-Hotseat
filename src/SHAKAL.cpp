@@ -331,8 +331,12 @@ int SHAKAL::run(sf::RenderWindow& window) {
                         {
                             if(t.hasCoins() || t.hasTreasure() || !t.getPirates().empty())
                                 lig++;
-                            else tempor.push_back(make_pair((mouse.x - 163) / 104,
-                                                          (mouse.y - 96) / 104));
+                            else {
+                                tempor.push_back(make_pair((mouse.x - 163) / 104,
+                                                           (mouse.y - 96) / 104));
+                                cell->getCoordCell()[make_pair((mouse.x - 163) / 104,
+                                        (mouse.y - 96) / 104)].sprite.setTexture(*textures->textures_["close.png"]);
+                            }
                         } else if(cell->getCoordCell()[s_pirate->getPos()].getTiletype() == CAVE)
                         {
                             if(t.getTiletype() == CAVE) {
@@ -354,7 +358,17 @@ int SHAKAL::run(sf::RenderWindow& window) {
                             s_pirate->setCanmove(false);
                             s_pirate->setSTATE(PIR_STATE);
                             if(cell->getCoordCell()[s_pirate->getPos()].getTiletype() == EARTHQUAKE){
-                                std::swap(cell->getCoordCell()[tempor[0]],cell->getCoordCell()[tempor[1]]);
+                                //std::swap(cell->getCoordCell()[tempor[0]],cell->getCoordCell()[tempor[1]]);
+                                delete cell->getCoordCell()[tempor[0]].A;
+                                delete cell->getCoordCell()[tempor[1]].A;
+
+                                TileType te = cell->getCoordCell()[tempor[0]].getTiletype();
+                                cell->getCoordCell()[tempor[0]].setTiletype(cell->getCoordCell()[tempor[1]].getTiletype());
+                                cell->getCoordCell()[tempor[1]].setTiletype(te);
+
+                                cell->setDefaultTileSprite(cell->getCoordCell()[tempor[0]]);
+                                cell->setDefaultTileSprite(cell->getCoordCell()[tempor[1]]);
+
                                 tempor.clear();
                             }else if(cell->getCoordCell()[s_pirate->getPos()].getTiletype() == CAVE)
                                 s_pirate->move(tempor[0], FORCEMOVE);
