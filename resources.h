@@ -5,7 +5,9 @@
 #ifndef SHAKALAKA_RESOURCES_H
 #define SHAKALAKA_RESOURCES_H
 #include <SFML/Graphics/Font.hpp>
-
+#include <SFML/Audio/SoundBuffer.hpp>
+#include <SFML/Audio/Sound.hpp>
+#include <utility>
 #include <dirent.h>
 #include <chrono>
 #include <sstream>
@@ -69,6 +71,45 @@ struct _textures_{
 static _textures_ *textures = new _textures_();
 
 
+struct _sounds_{
+    sf::SoundBuffer buff[10];
+
+    _sounds_(){
+
+#define LOADFROM(i,PATH) buff[i].loadFromFile(std::string("sounds/").append(#PATH))
+        LOADFROM(0,aiyapopalsya.ogg); LOADFROM(1,dakapitan.ogg); LOADFROM(2,kakskazhite.ogg);
+        LOADFROM(3,mistaliblizhekpobede.ogg); LOADFROM(4,moyaprelest.ogg);
+        LOADFROM(5,poboremsya.ogg); LOADFROM(6,tistalpiratom.ogg); LOADFROM(7,vidvigayus.ogg);
+        LOADFROM(8,yanesdelayueto.ogg); LOADFROM(9,yohohoo.ogg);
+
+        for(int i = 0 ; i < 10; i++)
+        {
+            sounds_.insert(std::make_pair(static_cast<Sounds>(i),&buff[i]));
+        }
+#undef LOADFROM
+    };
+
+    enum Sounds {
+            POPALSYA = 0,
+                DA = 1,OK = 2,OCHKI = 3,COIN,FIGHT,WIN,MOVE = 7,NEMOGU,HOHOJAJAOLALA
+    };
+
+    std::map<Sounds, sf::SoundBuffer *> sounds_;
+
+    void play(Sounds e){
+        sf::Sound s;
+        s.setBuffer(*sounds_.at(e));
+        s.setVolume(50.f);
+        s.play();
+    };
+
+    ~_sounds_(){
+        delete &buff;
+    }
+};
+
+static _sounds_ *sounds = new _sounds_();
+
 enum Action2Log{
     MOVED,
     RETURNED,
@@ -86,8 +127,6 @@ static std::string A2T()
     tm* ltm = localtime(&timestamp);
     stroke << "[" << ltm->tm_hour << ":"
      << ltm->tm_min << ":" << ltm->tm_sec << "]";
-
-
 
     return stroke.str();
 }

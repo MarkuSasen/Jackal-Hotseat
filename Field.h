@@ -197,6 +197,7 @@ struct ABORIGINAL_ACTION : public tile_action {
     virtual int operator()(Pirate *pir);
 
     bool voskreshaem;
+    player* _pl;
 };
 
 
@@ -303,6 +304,37 @@ struct JUNGLE_ACTION : public tile_action {
 
     virtual int operator()(Pirate *pir);
 };
+
+
+struct SEA_ACTION : public tile_action {
+    SEA_ACTION(Tile *t, _CELL *cell);
+
+    virtual void update();
+
+    virtual int operator()(Pirate *pir);
+};
+
+
+struct CANON_ACTION : public tile_action {
+    CANON_ACTION(Tile *t, _CELL *cell);
+
+    virtual void update();
+
+    virtual int operator()(Pirate *pir);
+
+    int rotate;
+    bool rotated;
+};
+
+struct ADDITIONAL_PIRATES : public tile_action {
+    ADDITIONAL_PIRATES(Tile *t, _CELL *cell);
+
+    virtual void update();
+
+    virtual int operator()(Pirate *pir);
+};
+
+
 
 class Tile : public sf::Drawable {
 

@@ -15,7 +15,7 @@ static _CELL* cell = nullptr;
 
 static void LOCK(Pirate* pir)
 {
-    for (auto &e :pir->Player->getPirates())
+    for (auto &e : pir->Player->getPirates())
         e->setCanmove(false);
     pir->Player->getShip()->setCanmove(false);
 }
@@ -190,11 +190,11 @@ int SHAKAL::run(sf::RenderWindow& window) {
                                      e.second.A->update();
                                  }
 
-                                 if (s_pirate) {
-                                     s_pirate->astate = Entity::AnimType::NONE;
-                                     s_pirate->resetSprite(2.3f, 2.3f, 0.0f, 0.0f);
-                                     s_pirate = nullptr;
-                                 }
+//                                 if (s_pirate) {
+//                                     s_pirate->astate = Entity::AnimType::NONE;
+//                                     s_pirate->resetSprite(2.3f, 2.3f, 0.0f, 0.0f);
+//                                     s_pirate = nullptr;
+//                                 }
                                  gui.unloadActions();
                                  gui._info->updateScore(you->getScore(), you->getRum());
                                  if (checkScore())
@@ -229,6 +229,7 @@ int SHAKAL::run(sf::RenderWindow& window) {
                         continue;
                             break;
                     }
+                    //GO SHIP
                     case 4:
                     {
                         if(s_pirate)
@@ -237,10 +238,13 @@ int SHAKAL::run(sf::RenderWindow& window) {
                             //ЗАПРЕЩАЕМ ХОДИТЬ ВСЕМ ПИРАТАМ ЭТОГО ИГРОКА
                             LOCK(s_pirate);
                             gui._info->updateScore(you->getScore(),you->getRum());
+
+                            cell->getCoordCell()[s_pirate->getPreviousPos()].removePir(s_pirate);
                         }
                         continue;
                             break;
                     }
+                    //LAND
                     case 5:
                     {
                         if(s_pirate)
@@ -249,6 +253,7 @@ int SHAKAL::run(sf::RenderWindow& window) {
                             //ЗАПРЕЩАЕМ ХОДИТЬ ВСЕМ ПИРАТАМ ЭТОГО ИГРОКА
                             LOCK(s_pirate);
 
+                            cell->getCoordCell()[s_pirate->getPos()]._do(s_pirate);
                         }
                         continue;
                             break;
@@ -291,7 +296,7 @@ int SHAKAL::run(sf::RenderWindow& window) {
                             moved = s_pirate->move(make_pair((mouse.x - 163) / 104, (mouse.y - 96) / 104));
 
                         if (moved) {
-
+                            sounds->play(_sounds_::Sounds::MOVE);
                             s_pirate->astate = Entity::AnimType::MOVE;
                             s_pirate->resetSprite(2.3f, 2.3f, 0, 0);
 
@@ -313,6 +318,14 @@ int SHAKAL::run(sf::RenderWindow& window) {
                         moved = s_ship->move(make_pair((mouse.x - 163) / 104, (mouse.y - 96) / 104));
                         if(moved)
                         {
+                            for( auto &e : t.getPirates())
+                            {
+                                if(e->Player->getID() != you->getID())
+                                    t.removePir(e);
+                                else
+                                    s_ship->add(e);
+                            }
+
                             for(auto &e : you->getPirates())
                                 e->setCanmove(false);
                                 s_ship->setCanmove(false);
@@ -329,7 +342,7 @@ int SHAKAL::run(sf::RenderWindow& window) {
                             //cout << t.getTiletype() << " showed\n";
                         }else if(cell->getCoordCell()[s_pirate->getPos()].getTiletype() == EARTHQUAKE)
                         {
-                            if(t.hasCoins() || t.hasTreasure() || !t.getPirates().empty())
+                            if(t.hasCoins() || t.hasTreasure() || !t.getPirates().empty() || t.A->used)
                                 lig++;
                             else {
                                 tempor.push_back(make_pair((mouse.x - 163) / 104,
@@ -458,6 +471,27 @@ int SHAKAL::run(sf::RenderWindow& window) {
                         gui.loadActions(s_pirate);
                         s_ship = nullptr;
                     }
+                } else if (you->getPirates().size() >= 4 && sf::Keyboard::isKeyPressed(Keyboard::Num4)) {
+                    if (you->selectPirate(3)->astate != Entity::AnimType::MOVE){
+                        s_pirate = you->selectPirate(3);
+                        s_pirate->astate = Pirate::AnimType::SELECTED;
+                        gui.loadActions(s_pirate);
+                        s_ship = nullptr;
+                    }
+                } else if (you->getPirates().size() >= 5 && sf::Keyboard::isKeyPressed(Keyboard::Num5)) {
+                    if (you->selectPirate(4)->astate != Entity::AnimType::MOVE){
+                        s_pirate = you->selectPirate(4);
+                        s_pirate->astate = Pirate::AnimType::SELECTED;
+                        gui.loadActions(s_pirate);
+                        s_ship = nullptr;
+                    }
+                } else if (you->getPirates().size() == 6 && sf::Keyboard::isKeyPressed(Keyboard::Num6)) {
+                    if (you->selectPirate(5)->astate != Entity::AnimType::MOVE){
+                        s_pirate = you->selectPirate(5);
+                        s_pirate->astate = Pirate::AnimType::SELECTED;
+                        gui.loadActions(s_pirate);
+                        s_ship = nullptr;
+                    }
                 } else if (sf::Keyboard::isKeyPressed(Keyboard::Q)) {
                     you->cscore();
                 }
@@ -498,6 +532,45 @@ int SHAKAL::run(sf::RenderWindow& window) {
                             s_pirate->resetSprite(2.3f,2.3f,0.f,0.f);
 
                         s_pirate = you->selectPirate(2);
+                        s_pirate->astate = Pirate::AnimType::SELECTED;
+                        s_pirate->localtime = 0;
+                        gui.loadActions(s_pirate);
+                        s_ship = nullptr;
+                    }
+
+                } else if (sf::Keyboard::isKeyPressed(Keyboard::Num4)) {
+
+                    if (you->getPirates().size() >= 4 && you->selectPirate(3)->astate != Entity::AnimType::MOVE) {
+                        s_pirate->astate=Entity::AnimType::NONE;
+                        s_pirate->resetSprite(2.3f,2.3f,0.f,0.f);
+
+                        s_pirate = you->selectPirate(3);
+                        s_pirate->astate = Pirate::AnimType::SELECTED;
+                        s_pirate->localtime = 0;
+                        gui.loadActions(s_pirate);
+                        s_ship = nullptr;
+                    }
+
+                } else if (sf::Keyboard::isKeyPressed(Keyboard::Num3)) {
+
+                    if (you->getPirates().size() >= 5 && you->selectPirate(4)->astate != Entity::AnimType::MOVE) {
+                        s_pirate->astate=Entity::AnimType::NONE;
+                        s_pirate->resetSprite(2.3f,2.3f,0.f,0.f);
+
+                        s_pirate = you->selectPirate(4);
+                        s_pirate->astate = Pirate::AnimType::SELECTED;
+                        s_pirate->localtime = 0;
+                        gui.loadActions(s_pirate);
+                        s_ship = nullptr;
+                    }
+
+                } else if (sf::Keyboard::isKeyPressed(Keyboard::Num3)) {
+
+                    if (you->getPirates().size() == 6 && you->selectPirate(5)->astate != Entity::AnimType::MOVE) {
+                        s_pirate->astate=Entity::AnimType::NONE;
+                        s_pirate->resetSprite(2.3f,2.3f,0.f,0.f);
+
+                        s_pirate = you->selectPirate(5);
                         s_pirate->astate = Pirate::AnimType::SELECTED;
                         s_pirate->localtime = 0;
                         gui.loadActions(s_pirate);
@@ -571,13 +644,13 @@ Tile& _CELL::setDefaultTileSprite(Tile& tile)
 {
 #define T(NAME) *textures->textures_[NAME]
 #define sprite tile.sprite
-
+sprite.setRotation(0.f);
     switch(tile.getTiletype())
     {
          case VOID : sprite.setTexture(T("close.png"));
             break;
          case SEA: //sprite.setTexture(T("sea.png"));
-            tile.A = new REGULAR_ACTION(&tile,this);
+            tile.A = new SEA_ACTION(&tile,this);
             break;
          case CLEAR:
              sprite.setTexture(T(std::string("clear").append(to_string(
@@ -657,19 +730,19 @@ Tile& _CELL::setDefaultTileSprite(Tile& tile)
             tile.A = new BALLOON_ACTION(&tile,this);
             break;
         case CANNON: sprite.setTexture(T("cannon0.png"));
-            tile.A = new REGULAR_ACTION(&tile,this);
+            tile.A = new CANON_ACTION(&tile,this);
             break;
         case LIGHTHOUSE: sprite.setTexture(T("lighthouse.png"));
             tile.A = new BEACON_ACTION(&tile,this);
             break;
         case BEN: sprite.setTexture(T("ben.png"));
-            tile.A = new REGULAR_ACTION(&tile,this);
+            tile.A = new ADDITIONAL_PIRATES(&tile,this);
             break;
         case MISSIONARY: sprite.setTexture(T("missionary.png"));
-            tile.A = new REGULAR_ACTION(&tile,this);
+            tile.A = new ADDITIONAL_PIRATES(&tile,this);
             break;
         case FRIDAY: sprite.setTexture(T("friday.png"));
-            tile.A = new REGULAR_ACTION(&tile,this);
+            tile.A = new ADDITIONAL_PIRATES(&tile,this);
             break;
         case RUM1: sprite.setTexture(T("rum1.png"));
             tile.A = new RUM_ACTION(&tile,this,1);
@@ -873,7 +946,8 @@ instance(instance)
     e = std::fill_n(e,52, Tile(SEA));
     e = std::fill_n(e,3, Tile(TRAP));
     e = std::fill_n(e,2, Tile(WEED));
-    std::fill_n(e,4, Tile(CLEAR));
+    e = std::fill_n(e,2, Tile(CANNON));
+    std::fill_n(e,2, Tile(CLEAR));
 
 
     srand(std::chrono::system_clock::now().time_since_epoch().count());

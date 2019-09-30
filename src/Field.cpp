@@ -13,14 +13,17 @@ using namespace std;
 using namespace sf;
 
 
-std::array<TileType,8> killable = { TileType::ICE,
+std::array<TileType,10> killable = { TileType::ICE,
                         TileType::ARROW1,
                         TileType::ARROW2,
                         TileType::ARROW3,
                         TileType::ARROW4,
                         TileType::ARROW5,
                         TileType::ARROW6,
-                        TileType::ARROW7 };
+                        TileType::ARROW7,
+                        TileType::CANNON,
+                        TileType::SEA
+};
 
 
 Tile::Tile(TileType t, tile_action *act) : tiletype(t), hidden(true), _coins(0),
@@ -272,6 +275,7 @@ int tile_action::operator()(Pirate *pir) {
             else {
                 pir->setPos(true_prev);
                 pir->setPreviousPos(prevtile->A->last_position);
+                t->removePir(pir);
                 return 1;
             }
         }
@@ -473,7 +477,7 @@ int ARROWS::operator()(Pirate *pir) {
         pir->setSTATE(ARROW7_STATE);
     }
 
-
+    return 0;
 }
 
 void ARROWS::update() {}
@@ -746,7 +750,7 @@ void CASTLE_ACTION::update()
 
 //////////////////////////////
 
-ABORIGINAL_ACTION::ABORIGINAL_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell),voskreshaem(false)
+ABORIGINAL_ACTION::ABORIGINAL_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell),voskreshaem(false), _pl(nullptr)
 {
     t->setAllowCoins(false);
     t->setMultiplePirates(false);
@@ -1138,3 +1142,104 @@ int JUNGLE_ACTION::operator()(Pirate *pir) {
 void JUNGLE_ACTION::update() {
 
 }
+
+
+////////////////////////////////////////////
+
+SEA_ACTION::SEA_ACTION(Tile *t, _CELL *cell) : tile_action(t,cell) {
+    t->setAllowCoins(true);
+    t->setMultiplePirates(true);
+    t->setAllowFight(false);
+    t->setAllowDrop(false);
+}
+
+
+int SEA_ACTION::operator()(Pirate *pir) {
+    tile_action::operator()(pir);
+
+    if(std::find(killable.begin(),killable.end(),_cell->getCoordCell()[pir->getPreviousPos()].getTiletype())
+        == killable.end())
+    {
+        pir->setPos(pir->getPreviousPos().first,pir->getPreviousPos().second);
+        pir->setPreviousPos(_cell->getCoordCell()[pir->getPreviousPos()].A->last_position);
+        pir->setCanmove(true);
+        t->removePir(pir);
+    }else{
+        if(pir->Player->getShip()->getPos() == pir->getPos())
+        {
+            pir->Player->getShip()->add(pir);
+            t->removePir(pir);
+            return 0;
+        }
+
+        if(pir->isCarryCoin())
+            pir->clearI();
+
+        pir->setSTATE(FREGATH_STATE);
+    }
+}
+
+void SEA_ACTION::update() {
+
+}
+
+
+////////////////////////////////////////////
+
+
+CANON_ACTION::CANON_ACTION(Tile *t, _CELL *cell) : tile_action(t,cell), rotate(0), rotated(false){
+    t->setAllowCoins(true);
+    t->setMultiplePirates(true);
+    t->setAllowFight(false);
+    t->setAllowDrop(false);
+}
+
+int CANON_ACTION::operator()(Pirate *pir) {
+    if(!rotated) {
+        std::srand(std::chrono::system_clock::now().time_since_epoch().count());
+        rotate = std::rand() % 4;
+        rotated = true;
+        t->sprite.rotate(rotate * 90.f);
+    }
+
+    tile_action::operator()(pir);
+
+
+
+    rotate == 3 ? pir->move(make_pair(0,pir->getY()),FORCEMOVE) :
+    rotate == 2 ? pir->move(make_pair(pir->getX(),12),FORCEMOVE) :
+    rotate == 1 ? pir->move(make_pair(12,pir->getY()),FORCEMOVE) :
+    pir->move(make_pair(pir->getX(),0),FORCEMOVE);
+
+    _cell->getCoordCell()[pir->getPos()]._do(pir);
+
+    return 0;
+}
+
+void CANON_ACTION::update() {}
+
+////////////////////////////////////////////
+
+
+ADDITIONAL_PIRATES::ADDITIONAL_PIRATES(Tile* t,_CELL *cell) : tile_action(t,cell){
+    t->setAllowCoins(true);
+    t->setMultiplePirates(false);
+    t->setAllowFight(true);
+    t->setAllowDrop(true);
+}
+
+
+int ADDITIONAL_PIRATES::operator()(Pirate *pir) {
+    tile_action::operator()(pir);
+    if(used) return 2;
+
+    pir->Player->born(new Pirate(pir->getPos(), PIR_STATE, pir->Player));
+    _pirates.push_back(pir);
+    return 0;
+}
+
+
+void ADDITIONAL_PIRATES::update() {
+
+}
+
