@@ -193,8 +193,10 @@ bool Ship::move(const std::pair<int, int> &_p) {
 
     if(moved)
     {
-        for(auto &e : pirates)
-            e->move(_p, FORCEMOVE);
+        for(auto &e : pirates) {
+            e->setPreviousPos(e->getPos());
+            e->setPos(_p.first, _p.second);
+        }
     }
     return moved;
 }
@@ -243,23 +245,9 @@ void Ship::add(Pirate *pirate) {
 }
 
 void Ship::remove(Pirate *pirate) {
-    if(isOnShip(pirate) && pirate->isCanmove()) {
+    if(isOnShip(pirate)) {
         pirates.erase(std::find(pirates.begin(), pirates.end(), pirate));
-        switch(pirate->Player->getID()) {
-            case 0:
-                pirate->move(std::make_pair(getPos().first,getPos().second+1), FORCEMOVE);
-                pirate->setSTATE(PIR_STATE); break;
-            case 1:
-                pirate->move(std::make_pair(getPos().first+1,getPos().second), FORCEMOVE);
-                pirate->setSTATE(PIR_STATE); break;
-            case 2:
-                pirate->move(std::make_pair(getPos().first,getPos().second-1), FORCEMOVE);
-                pirate->setSTATE(PIR_STATE); break;
-            case 3:
-                pirate->move(std::make_pair(getPos().first-1,getPos().second), FORCEMOVE);
-                pirate->setSTATE(PIR_STATE); break;
-            default: break;
-        }
+
         if(pirates.empty()) setCanmove(false);
     }
 }

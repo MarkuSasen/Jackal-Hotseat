@@ -99,6 +99,12 @@ public:
 };
 
 
+class startscreen : public screen{
+
+public:
+    int run(sf::RenderWindow& renderWindow);
+
+};
 
 //class WINNER : public screen {
 //

@@ -7,6 +7,7 @@
 #include <SFML/Graphics/Font.hpp>
 #include <SFML/Audio/SoundBuffer.hpp>
 #include <SFML/Audio/Sound.hpp>
+#include <SFML/Audio/Music.hpp>
 #include <utility>
 #include <dirent.h>
 #include <chrono>
@@ -43,6 +44,7 @@ static std::map<std::string,sf::Texture*>& loadTfrom(const char* path, const cha
         perror("Cannot open directory ./textures");
         return buffer;
     }
+
     return buffer;
 }
 
@@ -61,18 +63,42 @@ static _fonts_ *fonts = new _fonts_();
 struct _textures_{
 
     _textures_()
-    {
+    {    };
+
+    void initSH(){
+        //textures_.clear();
         loadTfrom("./textures/", ".png", textures_);
     };
 
+    void initStScr(){
+        //textures_.clear();
+        sf::Texture *c = new sf::Texture();
+            c->loadFromFile("./textures/paper.png");
+        textures_["paper.png"] = c;
+        c = new sf::Texture();
+            c->loadFromFile("./textures/icon_map.png");
+        textures_["icon_map.png"] = c;
+        c = new sf::Texture();
+            c->loadFromFile("./textures/background.png");
+        textures_["background.png"] = c;
+    };
+
     std::map<std::string, sf::Texture *> textures_;
+
+    ~_textures_(){
+        std::cerr << "texutres somehow destroyed!\n";
+        for(auto &e : textures_)
+            if(e.second)
+                delete e.second;
+    };
 };
 
-static _textures_ *textures = new _textures_();
+extern _textures_ *textures;
 
 
 struct _sounds_{
     sf::SoundBuffer buff[10];
+    sf::Music maintheme, shakal_theme;
 
     _sounds_(){
 
@@ -87,6 +113,16 @@ struct _sounds_{
             sounds_.insert(std::make_pair(static_cast<Sounds>(i),&buff[i]));
         }
 #undef LOADFROM
+
+        if(!maintheme.openFromFile("sounds/menutheme.ogg"))
+            std::cerr<< "Missed maintheme\n";
+        if(!shakal_theme.openFromFile("sounds/Tabletop_Battles.ogg"))
+            std::cerr << "Missed shakaltheme\n";
+        maintheme.setLoop(true);
+        shakal_theme.setLoop(true);
+
+        maintheme.setVolume(10.f);
+        shakal_theme.setVolume(5.f);
     };
 
     enum Sounds {
@@ -96,19 +132,24 @@ struct _sounds_{
 
     std::map<Sounds, sf::SoundBuffer *> sounds_;
 
-    void play(Sounds e){
-        sf::Sound s;
-        s.setBuffer(*sounds_.at(e));
-        s.setVolume(50.f);
-        s.play();
+
+
+    void playmenu(){
+        shakal_theme.stop();
+        maintheme.play();
+    };
+
+    void playshakal(){
+        maintheme.stop();
+        shakal_theme.play();
     };
 
     ~_sounds_(){
         delete &buff;
-    }
+    };
 };
 
-static _sounds_ *sounds = new _sounds_();
+extern _sounds_ *sounds;
 
 enum Action2Log{
     MOVED,

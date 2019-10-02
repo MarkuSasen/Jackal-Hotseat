@@ -43,6 +43,8 @@ Tile::Tile(TileType t, tile_action *act) : tiletype(t), hidden(true), _coins(0),
             sprite.getGlobalBounds().top);
     coin_number.setPosition(sprite.getGlobalBounds().left,
             sprite.getGlobalBounds().top);
+
+    rubashka.setTexture(*textures->textures_["fon.png"]);
 }
 
 
@@ -72,8 +74,11 @@ bool Tile::operator==(const Tile& tile){
 }
 
 void Tile::draw(sf::RenderTarget &target, sf::RenderStates states) const {
+    if(isHidden())
+        target.draw(rubashka, states);
+    else
+        target.draw(sprite, states);
 
-    target.draw(sprite, states);
     if (hasTreasure()) {
         target.draw(galeon_existing, states);
     }
@@ -90,6 +95,7 @@ void Tile::setSprite(const sf::Sprite &sprite) {
 }
 
 Tile &Tile::operator=(const Tile &tile) {
+
     tiletype = tile.getTiletype();
     allow_fight = tile.allow_fight;
     allow_coins = tile.allow_coins;
@@ -229,6 +235,8 @@ tile_action::tile_action(Tile *t,_CELL* cell) : t(t),_cell(cell), used(false){
 int tile_action::operator()(Pirate *pir) {
     if(!pir)
         return 1;
+
+
     Tile *prevtile = &_cell->getCoordCell()[pir->getPreviousPos()];
 
     auto e_count = std::count_if(_pirates.begin(),_pirates.end(),[&pir](Pirate* p)
@@ -490,22 +498,23 @@ RUMBARREL_ACTION::RUMBARREL_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
     t->setMultiplePirates(true);
     t->setAllowFight(true);
     t->setAllowDrop(true);
+    zapoy.clear();
 }
 
 int RUMBARREL_ACTION::operator()(Pirate *pir) {
-    tile_action::operator()(pir);
-    //zapoy.push_back(pir);
+    if(tile_action::operator()(pir) != 1);
+        zapoy.push_back(pir);
 }
 
 
 void RUMBARREL_ACTION::update() {
-    if(!_pirates.empty())
-        for(auto &e : _pirates)
+    if(!zapoy.empty())
+        for(auto &e : zapoy)
         {
             if(e->isCanmove())
             {
                 e->setCanmove(false);
-                _pirates.erase(std::find(_pirates.begin(),_pirates.end(),e));
+                zapoy.erase(std::find(zapoy.begin(),zapoy.end(),e));
             }
         }
 }
@@ -1231,10 +1240,12 @@ ADDITIONAL_PIRATES::ADDITIONAL_PIRATES(Tile* t,_CELL *cell) : tile_action(t,cell
 
 int ADDITIONAL_PIRATES::operator()(Pirate *pir) {
     tile_action::operator()(pir);
-    if(used) return 2;
+
+    if(used)
+        return 2;
 
     pir->Player->born(new Pirate(pir->getPos(), PIR_STATE, pir->Player));
-    _pirates.push_back(pir);
+    _pirates.push_back(pir->Player->getPirates().back());
     return 0;
 }
 

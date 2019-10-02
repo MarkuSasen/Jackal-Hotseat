@@ -19,7 +19,8 @@ int main()
     return 0;
 }
 */
-
+_textures_ *textures = new _textures_();
+_sounds_ *sounds = new _sounds_();
 
 int main()
 {
@@ -30,14 +31,18 @@ int main()
     RenderWindow window(VideoMode(1600,900),"Jackal", sf::Style::Close | sf::Style::Titlebar);
     window.setFramerateLimit(60);
 
-
-    SHAKAL sh(2);
-    screens.push_back(&sh);
+    startscreen stscr;
+    screens.push_back(&stscr);
 
     int screen = 0;
     while(screen != -1)
     {
         screen = screens[screen]->run(window);
+        if(screen > 1)
+        {
+            screens.push_back(new SHAKAL(screen));
+            screen = 1;
+        }
     }
 
     cout << std::is_move_assignable<Tile>();

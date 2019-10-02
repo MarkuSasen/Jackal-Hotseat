@@ -155,10 +155,14 @@ int player::getRum() const {
 }
 
 void player::born(Pirate *pir) {
-    pir->ENTITYSPRITE.setTexture(*textures->textures_["pirate_red.png"]);
+    if(textures->textures_.at("pirate_red.png"))
+        cerr << "\nI find it blyat!\n";
+    else cerr << "where da fuk is this texture\n\n";
+    pir->ENTITYSPRITE.setTexture(*textures->textures_.at("pirate_red.png"));
     pir->ENTITYSPRITE.setScale(sf::Vector2f(2.3f,2.3f));
     pir->ENTITYSPRITE.setOrigin(pir->ENTITYSPRITE.getLocalBounds().width/2,
                         pir->ENTITYSPRITE.getLocalBounds().height/2);
+    cout << "olala";
     pirates.push_back(pir);
 }
 

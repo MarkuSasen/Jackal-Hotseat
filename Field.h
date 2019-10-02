@@ -129,7 +129,7 @@ struct RUMBARREL_ACTION : public tile_action {
 
     virtual int operator()(Pirate *pir);
 
-    //std::list<Pirate *> zapoy;
+    std::list<Pirate *> zapoy;
 };
 
 struct TRAP_ACTION : public tile_action {
@@ -411,7 +411,7 @@ private:
     std::list<GameItem *> _items;
 
 public:
-    sf::Sprite sprite;
+    sf::Sprite sprite, rubashka;
     sf::Text coin_number, galeon_existing;
 };
 

@@ -23,7 +23,7 @@ static void LOCK(Pirate* pir)
 SHAKAL::SHAKAL(int players) : loadedtextures(false), mainview(), TURN(0), //texture_prefub(&textures->textures_)
 players_(players)
 {
-
+    textures->initSH();
     for(int i = 0; i<players; i++)
         PLAYERS[i] = new player(i, textures->textures_);
 
@@ -122,6 +122,8 @@ int SHAKAL::run(sf::RenderWindow& window) {
 
     std::vector<std::pair<int,int>> tempor;
 ///////////////////////////
+
+sounds->playshakal();
     while (true) {
 
         float time = clock.getElapsedTime().asMicroseconds();
@@ -130,24 +132,7 @@ int SHAKAL::run(sf::RenderWindow& window) {
 
         if(running == false)
         {
-            float shutdown = 0;
-            sf::Text text;
-            text.setFillColor(Color::Black);
-            text.setFont(fonts->coins_);
-            text.setString("Congratulation! Player " + std::to_string((TURN - 1)%players_) + " won!");
-            text.setOrigin(text.getLocalBounds().width/2,text.getLocalBounds().height/2);
-            text.setPosition(mainView.getCenter());
-            text.setCharacterSize(50);
-            while(shutdown < 1000.0f) {
-                shutdown += clock.getElapsedTime().asSeconds();
-                window.draw(backgr);
-                cell->draw(window, RenderStates(grid_transform));
-                window.draw(mousePos);
-                window.draw(gui);
-                window.draw(text);
-                window.display();
-            }
-            return -1;
+            return 0;
         }
 
 
@@ -232,7 +217,16 @@ int SHAKAL::run(sf::RenderWindow& window) {
                     //GO SHIP
                     case 4:
                     {
-                        if(s_pirate)
+                        auto ppos = s_pirate->getPreviousPos();
+                        auto pos = s_pirate->getPos();
+                        if(s_pirate //&&
+                        //ppos != s_pirate->Player->getShip()->getPos()
+                        && cell->getCoordCell()[pos].getTiletype() != SEA
+                        && !(cell->getCoordCell()[pos].getTiletype() == TURNTABLE2
+                        || cell->getCoordCell()[pos].getTiletype() == TURNTABLE2
+                        || cell->getCoordCell()[pos].getTiletype() == TURNTABLE3
+                        || cell->getCoordCell()[pos].getTiletype() == TURNTABLE4
+                        || cell->getCoordCell()[pos].getTiletype() == TURNTABLE5))
                         {
                             s_pirate->Player->getShip()->add(s_pirate);
                             //ЗАПРЕЩАЕМ ХОДИТЬ ВСЕМ ПИРАТАМ ЭТОГО ИГРОКА
@@ -250,6 +244,22 @@ int SHAKAL::run(sf::RenderWindow& window) {
                         if(s_pirate)
                         {
                             s_pirate->Player->getShip()->remove(s_pirate);
+                            auto _pos = s_pirate->Player->getShip()->getPos();
+                            switch(s_pirate->Player->getID()) {
+                                case 0:
+                                    s_pirate->move(std::make_pair(_pos.first,_pos.second+1), FORCEMOVE);
+                                    s_pirate->setSTATE(PIR_STATE); break;
+                                case 1:
+                                    s_pirate->move(std::make_pair(_pos.first+1,_pos.second), FORCEMOVE);
+                                    s_pirate->setSTATE(PIR_STATE); break;
+                                case 2:
+                                    s_pirate->move(std::make_pair(_pos.first,_pos.second-1), FORCEMOVE);
+                                    s_pirate->setSTATE(PIR_STATE); break;
+                                case 3:
+                                    s_pirate->move(std::make_pair(_pos.first-1,_pos.second), FORCEMOVE);
+                                    s_pirate->setSTATE(PIR_STATE); break;
+                                default: break;
+                            }
                             //ЗАПРЕЩАЕМ ХОДИТЬ ВСЕМ ПИРАТАМ ЭТОГО ИГРОКА
                             LOCK(s_pirate);
 
@@ -296,7 +306,7 @@ int SHAKAL::run(sf::RenderWindow& window) {
                             moved = s_pirate->move(make_pair((mouse.x - 163) / 104, (mouse.y - 96) / 104));
 
                         if (moved) {
-                            sounds->play(_sounds_::Sounds::MOVE);
+                            //sounds->play(_sounds_::Sounds::MOVE);
                             s_pirate->astate = Entity::AnimType::MOVE;
                             s_pirate->resetSprite(2.3f, 2.3f, 0, 0);
 
@@ -421,7 +431,7 @@ int SHAKAL::run(sf::RenderWindow& window) {
             else if (window.getView().getCenter().y + mainView.getSize().y / 2 >= backgr.getGlobalBounds().height)
                 rectstate = rectstate & 0b1101;
 
-            float moveY = 2.f * ((rectstate << 2) ? (rectstate >> 1) ? 1 : -1 : 0);
+            float moveY = 4.f * ((rectstate << 2) ? (rectstate >> 1) ? 1 : -1 : 0);
 
 
             if (VRIGHT.rect.contains(mp.x, mp.y))
@@ -434,7 +444,7 @@ int SHAKAL::run(sf::RenderWindow& window) {
             else if (window.getView().getCenter().x + mainView.getSize().x / 2 >= backgr.getGlobalBounds().width)
                 rectstate = rectstate & 0b1011;
 
-            float moveX = 2.f * ((rectstate >> 2) ? (rectstate >> 3) ? -1 : 1 : 0);
+            float moveX = 4.f * ((rectstate >> 2) ? (rectstate >> 3) ? -1 : 1 : 0);
 
 
             if (rectstate && ViewBounds) {
@@ -651,6 +661,7 @@ sprite.setRotation(0.f);
             break;
          case SEA: //sprite.setTexture(T("sea.png"));
             tile.A = new SEA_ACTION(&tile,this);
+            tile.show();
             break;
          case CLEAR:
              sprite.setTexture(T(std::string("clear").append(to_string(
@@ -766,7 +777,7 @@ sprite.setRotation(0.f);
             tile.A = new JUNGLE_ACTION(&tile,this);
             break;
         case WEED: sprite.setTexture(T("weed.png"));
-            tile.A = new WEED_ACTION(&tile,this, &instance);
+            tile.A = new REGULAR_ACTION(&tile,this/*, &instance*/);
             break;
         case BOAT: sprite.setTexture(T("boat.png"));
             tile.A = new REGULAR_ACTION(&tile,this);
@@ -1083,6 +1094,13 @@ instance(instance)
             coord_cell[pos].sprite.move(i * (offsetX + coord_cell[pos].sprite.getGlobalBounds().width),
                     j * (offsetY + coord_cell[pos].sprite.getGlobalBounds().width));
 
+            coord_cell[pos].rubashka.setOrigin(coord_cell[pos].rubashka.getLocalBounds().width/2,
+                    coord_cell[pos].rubashka.getLocalBounds().height/2);
+            coord_cell[pos].rubashka.setScale(scaleX, scaleY);
+            coord_cell[pos].rubashka.move(i * (offsetX + coord_cell[pos].rubashka.getGlobalBounds().width),
+                                        j * (offsetY + coord_cell[pos].rubashka.getGlobalBounds().width));
+
+
             coord_cell[pos].coin_number.setPosition(coord_cell[pos].sprite.getPosition());
             coord_cell[pos].galeon_existing.setPosition(coord_cell[pos].sprite.getPosition());
             coord_cell[pos].galeon_existing.move(-30.f,-30.f);
@@ -1120,3 +1138,118 @@ void _CELL::draw(sf::RenderTarget& target, sf::RenderStates states) const
         target.draw(e.second,states.transform);
     }
 }
+/////////////////////////////
+/////////////////////////////
+/////////////////////////////
+/////////////////////////////
+/////////////////////////////
+
+
+int startscreen::run(sf::RenderWindow &window) {
+
+    textures->initStScr();
+
+    std::list<sf::Sprite> buttons;
+    sf::Vector2f pos_buttonpanel(200, 400);
+
+    sf::Sprite background;
+    background.setTexture(*textures->textures_["background.png"]);
+    //background.setOrigin(background.getLocalBounds().width / 2, background.getLocalBounds().height / 2);
+    background.setPosition(0,0);
+    background.setScale(window.getSize().x/background.getLocalBounds().width,
+                        window.getSize().y/background.getLocalBounds().height);
+
+    sf::Sprite StartButton;
+    StartButton.setTexture(*textures->textures_["icon_map.png"]);
+    StartButton.setOrigin(StartButton.getLocalBounds().width / 2, StartButton.getLocalBounds().height / 2);
+    StartButton.setPosition(pos_buttonpanel);
+    StartButton.setScale(0.5f,0.5f);
+    pos_buttonpanel.y += 100;
+
+    sf::Text choose,II,III,IV; Sprite T_B;
+    choose.setFont(fonts->coins_);
+    II.setFont(fonts->coins_); IV.setFont(fonts->coins_); III.setFont(fonts->coins_);
+    choose.setString("Choose player's number : #2");
+    II.setString("II"); III.setString("III"); IV.setString("IV");
+    choose.setCharacterSize(50); choose.setLetterSpacing(3);
+    II.setFillColor(Color::Black);III.setFillColor(Color::Black);IV.setFillColor(Color::Black);
+    II.setCharacterSize(50); III.setCharacterSize(50); IV.setCharacterSize(50);
+
+    Vector2f Ipos(600,500);
+
+    choose.setPosition(Ipos.x-200,Ipos.y-200);
+    II.setPosition(Ipos.x,Ipos.y);
+    III.setPosition(Ipos.x+200,Ipos.y);
+    IV.setPosition(Ipos.x+400,Ipos.y);
+
+    //T_B.setTextureRect((IntRect) II.getLocalBounds());
+    T_B.setTexture(*textures->textures_["paper.png"]);
+    T_B.setScale(0.1f,0.1f);
+    T_B.setPosition(II.getPosition().x - 15.f,II.getPosition().y);
+
+    Sprite TIII(T_B), TIV(T_B);
+    TIII.setPosition(III.getPosition().x - 11.f,III.getPosition().y);
+    TIV.setPosition(IV.getPosition().x - 11.f,IV.getPosition().y);
+
+    buttons.push_back(background);
+    buttons.push_back(StartButton);
+    buttons.push_back(T_B);
+    buttons.push_back(TIII);
+    buttons.push_back(TIV);
+
+    int p_num = 2;
+
+    sounds->playmenu();
+
+    while (true) {
+
+
+        Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == Event::Closed) {
+                window.close();
+                return -1;
+            } else if (event.type == Event::MouseButtonPressed) {
+                Vector2i sa(event.mouseButton.x, event.mouseButton.y);
+                Vector2f mouse = window.mapPixelToCoords(sa);
+                //cout << "Mouse Pressed\n";
+                if (StartButton.getGlobalBounds().contains(mouse))
+                    return p_num;
+                else if(T_B.getGlobalBounds().contains(mouse))
+                {
+                    p_num = 2;
+                    choose.setString("Choose player's number : #2");
+                }
+                else if(TIII.getGlobalBounds().contains(mouse))
+                {
+                    p_num = 3;
+                    choose.setString("Choose player's number : #3");
+                }
+                else if(TIV.getGlobalBounds().contains(mouse))
+                {
+                    p_num = 4;
+                    choose.setString("Choose player's number : #4");
+                }
+            } else if (event.type == Event::MouseMoved)
+            {
+
+            }
+        }
+
+
+        window.clear();
+
+        for(auto &e : buttons)
+            window.draw(e);
+
+
+        window.draw(choose);
+
+        window.draw(II);window.draw(III);window.draw(IV);
+        window.display();
+    }
+    return -1;
+
+}
+
+
