@@ -66,6 +66,7 @@ void player::draw(sf::RenderTarget &target, sf::RenderStates states) const
 player::~player() {
     for(auto &e : pirates)
         delete(e);
+    delete ship;
 }
 
 Pirate *player::getPirateById(int id) {
@@ -125,7 +126,7 @@ void player::kill(Pirate *pir) {
     if(i != pirates.end()) {
         ship->add(pir);
 
-        cout <<  pir->getId() << " pirate was killed\n";
+        //cout <<  pir->getId() << " pirate was killed\n";
     }
 }
 
@@ -155,14 +156,11 @@ int player::getRum() const {
 }
 
 void player::born(Pirate *pir) {
-    if(textures->textures_.at("pirate_red.png"))
-        cerr << "\nI find it blyat!\n";
-    else cerr << "where da fuk is this texture\n\n";
     pir->ENTITYSPRITE.setTexture(*textures->textures_.at("pirate_red.png"));
     pir->ENTITYSPRITE.setScale(sf::Vector2f(2.3f,2.3f));
     pir->ENTITYSPRITE.setOrigin(pir->ENTITYSPRITE.getLocalBounds().width/2,
                         pir->ENTITYSPRITE.getLocalBounds().height/2);
-    cout << "olala";
+
     pirates.push_back(pir);
 }
 

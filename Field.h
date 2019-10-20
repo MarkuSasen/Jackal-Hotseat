@@ -129,7 +129,7 @@ struct RUMBARREL_ACTION : public tile_action {
 
     virtual int operator()(Pirate *pir);
 
-    std::list<Pirate *> zapoy;
+    std::map<int, Pirate *> zapoy;
 };
 
 struct TRAP_ACTION : public tile_action {

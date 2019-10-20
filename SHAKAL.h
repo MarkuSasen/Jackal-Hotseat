@@ -34,8 +34,6 @@ private:
 
 public:
     int TURN;
-    const int players_;
-
     player *PLAYERS[4];
 
     SHAKAL(int players);
@@ -45,11 +43,14 @@ public:
     ~SHAKAL();
 
     int checkWhat(const std::pair<int,int>& pos, TileType type, Pirate* whom);
+
     int checkScore();
 
+    int players_;
+    static int winner;
 private:
 
-
+    void reset();
     void proccessEvent(sf::RenderWindow& window);
 public:
 

@@ -102,17 +102,36 @@ struct _sounds_{
 
     _sounds_(){
 
-#define LOADFROM(i,PATH) buff[i].loadFromFile(std::string("sounds/").append(#PATH))
-        LOADFROM(0,aiyapopalsya.ogg); LOADFROM(1,dakapitan.ogg); LOADFROM(2,kakskazhite.ogg);
-        LOADFROM(3,mistaliblizhekpobede.ogg); LOADFROM(4,moyaprelest.ogg);
-        LOADFROM(5,poboremsya.ogg); LOADFROM(6,tistalpiratom.ogg); LOADFROM(7,vidvigayus.ogg);
-        LOADFROM(8,yanesdelayueto.ogg); LOADFROM(9,yohohoo.ogg);
-
-        for(int i = 0 ; i < 10; i++)
-        {
-            sounds_.insert(std::make_pair(static_cast<Sounds>(i),&buff[i]));
-        }
-#undef LOADFROM
+        if(!buff[0].loadFromFile("sounds/yes.ogg"))
+            std::cerr << "AUDIO ERR\n";
+        else sounds_.insert(std::make_pair("yes", &buff[0]));
+        if(!buff[1].loadFromFile("sounds/no.ogg"))
+            std::cerr << "AUDIO ERR\n";
+        else sounds_.insert(std::make_pair("no", &buff[1]));
+        if(!buff[2].loadFromFile("sounds/catch.ogg"))
+            std::cerr << "AUDIO ERR\n";
+        else sounds_.insert(std::make_pair("catch", &buff[2]));
+        if(!buff[3].loadFromFile("sounds/coinget.ogg"))
+            std::cerr << "AUDIO ERR\n";
+        else sounds_.insert(std::make_pair("coinget", &buff[3]));
+        if(!buff[4].loadFromFile("sounds/move.ogg"))
+            std::cerr << "AUDIO ERR\n";
+        else sounds_.insert(std::make_pair("move", &buff[4]));
+        if(!buff[5].loadFromFile("sounds/mydear.ogg"))
+            std::cerr << "AUDIO ERR\n";
+        else sounds_.insert(std::make_pair("mydear", &buff[5]));
+        if(!buff[6].loadFromFile("sounds/win.ogg"))
+            std::cerr << "AUDIO ERR\n";
+        else sounds_.insert(std::make_pair("win", &buff[6]));
+        if(!buff[7].loadFromFile("sounds/ok.ogg"))
+            std::cerr << "AUDIO ERR\n";
+        else sounds_.insert(std::make_pair("ok", &buff[7]));
+        if(!buff[8].loadFromFile("sounds/yohohoo.ogg"))
+            std::cerr << "AUDIO ERR\n";
+        else sounds_.insert(std::make_pair("yohoho", &buff[8]));
+        if(!buff[9].loadFromFile("sounds/gachi.ogg"))
+            std::cerr << "AUDIO ERR\n";
+        else sounds_.insert(std::make_pair("gachi", &buff[9]));
 
         if(!maintheme.openFromFile("sounds/menutheme.ogg"))
             std::cerr<< "Missed maintheme\n";
@@ -121,32 +140,61 @@ struct _sounds_{
         maintheme.setLoop(true);
         shakal_theme.setLoop(true);
 
-        maintheme.setVolume(10.f);
-        shakal_theme.setVolume(5.f);
     };
 
-    enum Sounds {
-            POPALSYA = 0,
-                DA = 1,OK = 2,OCHKI = 3,COIN,FIGHT,WIN,MOVE = 7,NEMOGU,HOHOJAJAOLALA
-    };
 
-    std::map<Sounds, sf::SoundBuffer *> sounds_;
+    std::map<std::string, sf::SoundBuffer *> sounds_;
 
 
 
     void playmenu(){
         shakal_theme.stop();
+        maintheme.setVolume(1.f);
         maintheme.play();
     };
 
     void playshakal(){
         maintheme.stop();
+        shakal_theme.setVolume(1.f);
         shakal_theme.play();
     };
 
+    void play(std::string name){
+        if(ass.getStatus() == sf::Sound::Playing)
+            return;
+
+        if(name == "move")
+            ass.setBuffer(buff[4]);
+        else if(name == "catch")
+            ass.setBuffer(buff[2]);
+        else if(name == "yes")
+            ass.setBuffer(buff[0]);
+        else if(name == "no")
+            ass.setBuffer(buff[1]);
+        else if(name == "mydear")
+            ass.setBuffer(buff[5]);
+        else if(name == "gachi")
+            ass.setBuffer(buff[9]);
+        else if(name == "yohoho")
+            ass.setBuffer(buff[8]);
+        else if(name == "win")
+            ass.setBuffer(buff[6]);
+        else if(name == "coinget")
+            ass.setBuffer(buff[3]);
+        else if(name == "ok")
+            ass.setBuffer(buff[7]);
+
+        ass.setVolume(5.f);
+        ass.play();
+    };
+
     ~_sounds_(){
+        ass.stop();
+        maintheme.stop();
+        shakal_theme.stop();
         delete &buff;
     };
+    sf::Sound ass;
 };
 
 extern _sounds_ *sounds;

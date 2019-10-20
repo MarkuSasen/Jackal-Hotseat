@@ -252,7 +252,7 @@ int tile_action::operator()(Pirate *pir) {
     {
         if(e_count)
         {
-            cout << "Fight!\n";
+            //cout << "Fight!\n";
             for(auto &e : _pirates) {
 
                 if(e->Player->getID() == pir->Player->getID()) continue;
@@ -263,6 +263,8 @@ int tile_action::operator()(Pirate *pir) {
 
                 e->Player->kill(e);
                 e_count = 0;
+
+                sounds->play("gachi");
             }
         }
     }
@@ -349,6 +351,7 @@ REGULAR_ACTION::REGULAR_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
 int REGULAR_ACTION::operator()(Pirate *pir)
 {
     tile_action::operator()(pir);
+    sounds->play("move");
     //std::cout << "REGULAR_ACTION\n";
     return 0;
 }
@@ -371,6 +374,7 @@ int HORSE_ACTION::operator()(Pirate *pir)
     tile_action::operator()(pir);
     pir->setCanmove(true);
     pir->setSTATE(HORSE_STATE);
+    sounds->play("move");
 }
 
 void HORSE_ACTION::update()
@@ -409,6 +413,7 @@ int ICE_ACTION::operator()(Pirate *pir) {
         _cell->getCoordCell()[pir->getPos()]._do(pir);
         //tile_action::operator()(pir);
     }
+    sounds->play("yes");
 }
 
 void ICE_ACTION::update() {
@@ -502,8 +507,11 @@ RUMBARREL_ACTION::RUMBARREL_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
 }
 
 int RUMBARREL_ACTION::operator()(Pirate *pir) {
-    if(tile_action::operator()(pir) != 1);
-        zapoy.push_back(pir);
+    tile_action::operator()(pir);
+
+        //zapoy.insert(std::make_pair(SHAKAL::TURN,pir));
+        sounds->play("catch");
+
 }
 
 
@@ -511,11 +519,9 @@ void RUMBARREL_ACTION::update() {
     if(!zapoy.empty())
         for(auto &e : zapoy)
         {
-            if(e->isCanmove())
-            {
-                e->setCanmove(false);
-                zapoy.erase(std::find(zapoy.begin(),zapoy.end(),e));
-            }
+//            e.second->setCanmove(false);
+//            if(e.first + 2 == SHAKAL::TURN)
+//                zapoy.erase(e.first);
         }
 }
 
@@ -541,6 +547,8 @@ int TRAP_ACTION::operator()(Pirate *pir) {
             _trapped = pir;
         }
     else _trapped = pir;
+
+    sounds->play("catch");
 }
 
 
@@ -599,18 +607,18 @@ int VERTEX::operator()(Pirate *pir) {
                     c = _trapped.erase(c);
                 } else c++;
 
-                cout << pir_iter->second->getId() << " : " << (int) pir_iter->first;
+                //cout << pir_iter->second->getId() << " : " << (int) pir_iter->first;
 
                 if (static_cast<int>(pir_iter->first + 1) <= _turns) {
                     _trapped.insert(make_pair(static_cast<VERTEX::_position>(((int)pir_iter->first) + 1), pir));
-                    cout << " -> " << pir_iter->first + 1 << endl;
+                    //cout << " -> " << pir_iter->first + 1 << endl;
                 } else pir->setSTATE(PIR_STATE);
 
                 _trapped.erase(pir_iter);
     }
     else{
         _trapped.insert(make_pair(I,pir));
-        cerr << pir->getId() << " trapped\n";
+        //cerr << pir->getId() << " trapped\n";
         auto e = _trapped.equal_range(I);
             for(auto c = e.first; c != e.second && c != _trapped.end(); )
                 if(c->second->Player->getID() != pir->Player->getID()){
@@ -620,6 +628,7 @@ int VERTEX::operator()(Pirate *pir) {
                     c = _trapped.erase(c);
                 } else c++;
     }
+    sounds->play("catch");
 
 //    for(int i = 1; i <= _turns; i++){
 //        auto e = _trapped.lower_bound(static_cast<_position >(i));
@@ -703,6 +712,8 @@ int CROCO_ACTION::operator()(Pirate *pir) {
     std::pair<int,int> prev = pir->getPreviousPos();
     pir->move(prev,FORCEMOVE);
     _cell->getCoordCell()[prev]._do(pir);
+
+    sounds->play("no");
 }
 
 void CROCO_ACTION::update() {}
@@ -722,6 +733,8 @@ int CANNIBAL_ACTION::operator()(Pirate *pir) {
 
     _pirates.erase(find(_pirates.begin(),_pirates.end(),pir));
     pir->Player->remove(pir);
+
+    sounds->play("yohoho");
 }
 
 void CANNIBAL_ACTION::update() {}
@@ -749,6 +762,8 @@ int CASTLE_ACTION::operator()(Pirate *pir) {
 //        pir->Player->remove(pir);
 //        return;
 //    }
+
+    sounds->play("gachi");
 }
 
 void CASTLE_ACTION::update()
@@ -783,6 +798,8 @@ int ABORIGINAL_ACTION::operator()(Pirate *pir) {
     {
         voskreshaem = true;
     }
+
+    sounds->play("ok");
 }
 
 void ABORIGINAL_ACTION::update() {
@@ -812,6 +829,8 @@ int BALLOON_ACTION::operator()(Pirate *pir) {
 
     _pirates.erase(find(_pirates.begin(),_pirates.end(),pir));
     pir->Player->getShip()->add(pir);
+
+    sounds->play("yohoho");
 }
 
 void BALLOON_ACTION::update() {
@@ -839,7 +858,7 @@ int PLANE_ACTION::operator()(Pirate *pir) {
 
     triggered = true;
     pir->setSTATE(PLANE_STATE);
-
+    sounds->play("yes");
 }
 
 
@@ -882,6 +901,8 @@ int RUM_ACTION::operator()(Pirate *pir) {
         pir->Player->addrum();
 
     used = true;
+
+    sounds->play("yohoho");
 }
 
 void RUM_ACTION::update() {
@@ -908,6 +929,7 @@ int EARTHQUAKE_ACTION::operator()(Pirate *pir) {
     pir->setCanmove(true);
 
     used = true;
+    sounds->play("no");
 }
 
 void EARTHQUAKE_ACTION::update() {
@@ -932,6 +954,7 @@ int GALEON_ACTION::operator()(Pirate *pir) {
 
     (*_cell)[pir->getPos()].addItem(new GALEON());
     used = true;
+    sounds->play("mydear");
 //
 //    t.galeon_existing.setString(std::to_string(std::count_if( t.getItems().begin(),t.getItems().end(),
 //                                                            [](GameItem* item){ return item->getType() == GameItem::ItemType::GALEON;})));
@@ -964,11 +987,11 @@ int CAVE_ACTION::operator()(Pirate *pir) {
                     if (!exit1) {
                         exit1 = &_cell->getCoordCell()[make_pair(i,j)];
                         e1 = make_pair(i,j);
-                        cout << t << " e1 -> " << exit1 << endl;
+                        //cout << t << " e1 -> " << exit1 << endl;
                     } else {
                         exit2 = &_cell->getCoordCell()[make_pair(i,j)];
                         e2 = make_pair(i,j);
-                        cout << t << " e2 -> " << exit2 << endl;
+                        //cout << t << " e2 -> " << exit2 << endl;
                     }
                 }
 
@@ -1010,6 +1033,8 @@ int CAVE_ACTION::operator()(Pirate *pir) {
             } else return 0;
         } else pir->move(e2,FORCEMOVE);
     }
+
+    sounds->play("catch");
 }
 
 void CAVE_ACTION::update() {
@@ -1055,6 +1080,7 @@ int WEED_ACTION::operator()(Pirate *pir) {
     for(int i = _field->players_-1; i > 0; i--)
         swap(P(0), P(i));
 
+    sounds->play("yes");
 }
 
 void WEED_ACTION::update() {
@@ -1098,9 +1124,10 @@ int GOLD_ACTION::operator()(Pirate *pir) {
     if(used) return 2;
 
     used = true;
-    cout << "spawned " << _num << endl;
+    //cout << "spawned " << _num << endl;
     for(int i = 0; i < _num; ++i)
         t->addItem(new GOLD());
+    sounds->play("move");
 }
 
 void GOLD_ACTION::update() {
@@ -1145,6 +1172,8 @@ JUNGLE_ACTION::JUNGLE_ACTION(Tile *t, _CELL *cell) : tile_action(t, cell)
 
 int JUNGLE_ACTION::operator()(Pirate *pir) {
     tile_action::operator()(pir);
+
+    sounds->play("gachi");
 }
 
 
@@ -1186,6 +1215,7 @@ int SEA_ACTION::operator()(Pirate *pir) {
 
         pir->setSTATE(FREGATH_STATE);
     }
+
 }
 
 void SEA_ACTION::update() {
@@ -1222,6 +1252,7 @@ int CANON_ACTION::operator()(Pirate *pir) {
 
     _cell->getCoordCell()[pir->getPos()]._do(pir);
 
+    sounds->play("yohoho");
     return 0;
 }
 
@@ -1243,6 +1274,7 @@ int ADDITIONAL_PIRATES::operator()(Pirate *pir) {
 
     if(used)
         return 2;
+    used = true;
 
     pir->Player->born(new Pirate(pir->getPos(), PIR_STATE, pir->Player));
     _pirates.push_back(pir->Player->getPirates().back());

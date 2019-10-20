@@ -105,6 +105,11 @@ void Pirate::clearI() {
     INVENTORY.clear();
 }
 
+Pirate::~Pirate() {
+    for(auto &e : INVENTORY)
+        delete e;
+}
+
 /////////////////////////////
 /////////////////////////////
 /////////////////////////////

@@ -118,6 +118,7 @@ void Entity::update(float time)
 void Entity::resetSprite(float ScaleX, float ScaleY, float posX, float posY) {
     ENTITYSPRITE.setScale(ScaleX, ScaleY);
     localtime = 0;
+
     //if(astate == SELECTED) astate = NONE;
 }
 

@@ -11,6 +11,8 @@
 using namespace sf;
 using namespace std;
 
+int SHAKAL::winner = -1;
+
 static _CELL* cell = nullptr;
 
 static void LOCK(Pirate* pir)
@@ -20,8 +22,7 @@ static void LOCK(Pirate* pir)
     pir->Player->getShip()->setCanmove(false);
 }
 
-SHAKAL::SHAKAL(int players) : loadedtextures(false), mainview(), TURN(0), //texture_prefub(&textures->textures_)
-players_(players)
+SHAKAL::SHAKAL(int players) : loadedtextures(false), mainview(), TURN(0), players_(players)
 {
     textures->initSH();
     for(int i = 0; i<players; i++)
@@ -31,9 +32,17 @@ players_(players)
 }
 
 
+void SHAKAL::reset() {
+    for (int i = 0; i < players_; i++)
+        delete PLAYERS[i];
+
+    delete cell;
+}
 
 
 int SHAKAL::run(sf::RenderWindow& window) {
+
+    if(!cell) cell = new _CELL(*this);
 
     float wSizeX = window.getSize().x;
     float wSizeY = window.getSize().y;
@@ -132,6 +141,7 @@ sounds->playshakal();
 
         if(running == false)
         {
+            winner = (TURN-1) % players_;
             return 0;
         }
 
@@ -139,6 +149,7 @@ sounds->playshakal();
         Event event;
         while (window.pollEvent(event)) {
             if (event.type == Event::Closed) {
+                sounds->shakal_theme.stop();
                 window.close();
                 return -1;
             } else if (event.type == Event::Resized) {
@@ -168,18 +179,19 @@ sounds->playshakal();
                                  for (auto &e : you->getPirates()) {
                                      you->getPirateById(e->getId())->setCanmove(true);
                                  }
-                                 if(!you->getShip()->getPirates().empty())you->getShip()->setCanmove(true);
+                                 if(!you->getShip()->getPirates().empty())
+                                     you->getShip()->setCanmove(true);
 
 
                                  for (auto &e : cell->getCoordCell()) {
                                      e.second.A->update();
                                  }
 
-//                                 if (s_pirate) {
-//                                     s_pirate->astate = Entity::AnimType::NONE;
-//                                     s_pirate->resetSprite(2.3f, 2.3f, 0.0f, 0.0f);
-//                                     s_pirate = nullptr;
-//                                 }
+                                 if (s_pirate) {
+                                     s_pirate->astate = Entity::AnimType::NONE;
+                                     s_pirate->resetSprite(2.3f, 2.3f, 0.0f, 0.0f);
+                                     s_pirate = nullptr;
+                                 }
                                  gui.unloadActions();
                                  gui._info->updateScore(you->getScore(), you->getRum());
                                  if (checkScore())
@@ -199,8 +211,8 @@ sounds->playshakal();
                                 gui.loadActions(s_pirate);
 //                                gui._info->updatelog("PICKED an item %s", s_pirate->getInventory().front()->_type==GameItem::ItemType::GALEON?
 //                                                                          "GALEON":"GOLD");
+                                sounds->play("mydear");
                             }
-
                             continue;
                             break;
                         }
@@ -235,6 +247,7 @@ sounds->playshakal();
 
                             cell->getCoordCell()[s_pirate->getPreviousPos()].removePir(s_pirate);
                         }
+                        sounds->play("yohoho");
                         continue;
                             break;
                     }
@@ -342,7 +355,6 @@ sounds->playshakal();
                             s_ship = nullptr;
                             gui.unloadActions();
                         }
-                        else cout << s_ship->isCanmove() << " " << s_ship->getSTATE();
                     }
                     else if(smode && s_pirate)
                     {
@@ -895,6 +907,7 @@ int SHAKAL::checkScore() {
     return 0;
 }
 
+
 SHAKAL::_collisions SHAKAL::_collisions::update(Pirate *mov) {
 
     if (allPirates.count(mov->getPos()) >= 1) {
@@ -976,7 +989,7 @@ instance(instance)
             distanses.push_back(std::distance(shuffle.begin(),p));
     }
 
-    cout << " array size : " << shuffle.size() << endl;
+    //cout << " array size : " << shuffle.size() << endl;
 
     for(int i = 0; i < 13; i++)
     {
@@ -1166,10 +1179,12 @@ int startscreen::run(sf::RenderWindow &window) {
     StartButton.setScale(0.5f,0.5f);
     pos_buttonpanel.y += 100;
 
-    sf::Text choose,II,III,IV; Sprite T_B;
+    sf::Text choose,II,III,IV,winneris; Sprite T_B;
     choose.setFont(fonts->coins_);
     II.setFont(fonts->coins_); IV.setFont(fonts->coins_); III.setFont(fonts->coins_);
-    choose.setString("Choose player's number : #2");
+    choose.setString("Choose player's number : #2"); winneris.setString(std::string("Player ").append(
+            std::to_string(SHAKAL::winner)
+            ).append(" won last match!"));
     II.setString("II"); III.setString("III"); IV.setString("IV");
     choose.setCharacterSize(50); choose.setLetterSpacing(3);
     II.setFillColor(Color::Black);III.setFillColor(Color::Black);IV.setFillColor(Color::Black);
@@ -1178,6 +1193,8 @@ int startscreen::run(sf::RenderWindow &window) {
     Vector2f Ipos(600,500);
 
     choose.setPosition(Ipos.x-200,Ipos.y-200);
+    winneris.setPosition(10,10); winneris.setFillColor(Color::Magenta);
+    winneris.setFont(fonts->coins_);
     II.setPosition(Ipos.x,Ipos.y);
     III.setPosition(Ipos.x+200,Ipos.y);
     IV.setPosition(Ipos.x+400,Ipos.y);
@@ -1191,6 +1208,8 @@ int startscreen::run(sf::RenderWindow &window) {
     TIII.setPosition(III.getPosition().x - 11.f,III.getPosition().y);
     TIV.setPosition(IV.getPosition().x - 11.f,IV.getPosition().y);
 
+
+
     buttons.push_back(background);
     buttons.push_back(StartButton);
     buttons.push_back(T_B);
@@ -1201,6 +1220,7 @@ int startscreen::run(sf::RenderWindow &window) {
 
     sounds->playmenu();
 
+    window.setView(window.getDefaultView());
     while (true) {
 
 
@@ -1213,8 +1233,9 @@ int startscreen::run(sf::RenderWindow &window) {
                 Vector2i sa(event.mouseButton.x, event.mouseButton.y);
                 Vector2f mouse = window.mapPixelToCoords(sa);
                 //cout << "Mouse Pressed\n";
-                if (StartButton.getGlobalBounds().contains(mouse))
+                if (StartButton.getGlobalBounds().contains(mouse)) {
                     return p_num;
+                }
                 else if(T_B.getGlobalBounds().contains(mouse))
                 {
                     p_num = 2;
@@ -1246,6 +1267,9 @@ int startscreen::run(sf::RenderWindow &window) {
         window.draw(choose);
 
         window.draw(II);window.draw(III);window.draw(IV);
+        if(SHAKAL::winner != -1)
+            window.draw(winneris);
+
         window.display();
     }
     return -1;

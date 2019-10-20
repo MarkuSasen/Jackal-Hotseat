@@ -314,8 +314,8 @@ ShakalGui::InventoryTab::InventoryTab(Pirate *_pir, ShakalGui &parent) : _parent
                                   TAB.getGlobalBounds().top + 55);
         }else {
             GALEON.setTexture(*_parent.textures.at("coin_c.png"));
-            GALEON.setOrigin(GOLD_COIN.getLocalBounds().width / 2,
-                             GOLD_COIN.getLocalBounds().height / 2);
+            GALEON.setOrigin(GALEON.getLocalBounds().width / 2,
+                             GALEON.getLocalBounds().height / 2);
             GALEON.setScale(1.2f, 0.8f);
             GALEON.setPosition(TAB.getGlobalBounds().left + 40,
                                TAB.getGlobalBounds().top + 55);
@@ -338,6 +338,9 @@ void ShakalGui::InventoryTab::update(float time) {
 
     GOLD_COIN.setPosition(TAB.getGlobalBounds().left + 40,
                               TAB.getGlobalBounds().top + 55);
+
+    GALEON.setPosition(TAB.getGlobalBounds().left + 40,
+                       TAB.getGlobalBounds().top + 55);
 
     for(int i = 0; i < 5; i++)
         pirates[i].setPosition(TAB.getGlobalBounds().left + 40,

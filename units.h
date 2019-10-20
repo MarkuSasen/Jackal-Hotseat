@@ -82,8 +82,10 @@ public:
     void drop(Tile& tile);
 
     bool isCarryCoin() const;
-
     void clearI();
+
+    ~Pirate();
+
 private:
     std::list<GameItem*> INVENTORY;
     int coin;

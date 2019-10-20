@@ -35,18 +35,17 @@ int main()
     screens.push_back(&stscr);
 
     int screen = 0;
-    while(screen != -1)
-    {
+    while(screen != -1) {
         screen = screens[screen]->run(window);
-        if(screen > 1)
-        {
-            screens.push_back(new SHAKAL(screen));
+        if (screen > 1) {
+//            if(screens[1])
+//            {
+//                delete screens[1];
+//            }
+            screens[1] = new SHAKAL(screen);
             screen = 1;
         }
     }
-
-    cout << std::is_move_assignable<Tile>();
-
 
     //cout << HORSE_STATE(make_pair(2,2),make_pair(0,1));
     return 0;
