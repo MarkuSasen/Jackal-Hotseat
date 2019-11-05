@@ -406,6 +406,19 @@ ShakalGui::InfoTab::InfoTab(ShakalGui &parent) : _parent(parent) {
     infobar.setTexture(*_parent.textures.at("paper.png"));
     infobar.setScale(3.0f,0.05f);
     infobar.setPosition(_parent.background.getGlobalBounds().left + 2,_parent.background.getGlobalBounds().top);
+
+
+    mark.setTexture(*_parent.textures.at("Mark.png"));
+    van.setTexture(*_parent.textures.at("Van.png"));
+    ricardo.setTexture(*_parent.textures.at("ricardo.png"));
+    billy.setTexture(*_parent.textures.at("Billy.png"));
+
+
+    mark.scale(0.2,0.2); van.scale(0.2,0.2); billy.scale(0.5,0.5); ricardo.scale(0.5,0.5);
+    mark.setPosition(_parent.background.getGlobalBounds().left + 420.f,_parent.background.getGlobalBounds().top + 710.f);
+    van.setPosition(_parent.background.getGlobalBounds().left + 420.f,_parent.background.getGlobalBounds().top + 710.f);
+    ricardo.setPosition(_parent.background.getGlobalBounds().left + 400.f,_parent.background.getGlobalBounds().top + 700.f);
+    billy.setPosition(_parent.background.getGlobalBounds().left + 400.f,_parent.background.getGlobalBounds().top + 700.f);
 }
 
 void ShakalGui::InfoTab::draw(sf::RenderTarget &target, sf::RenderStates states) const {
@@ -430,6 +443,11 @@ void ShakalGui::InfoTab::update(float time) {
     InfoPanel.setPosition(_parent.background.getGlobalBounds().left + 20,_parent.background.getGlobalBounds().top + 680);
     infobar.setPosition(_parent.background.getGlobalBounds().left + 2,_parent.background.getGlobalBounds().top);
 
+
+    mark.setPosition(_parent.background.getGlobalBounds().left + 420.f,_parent.background.getGlobalBounds().top + 710.f);
+    van.setPosition(_parent.background.getGlobalBounds().left + 420.f,_parent.background.getGlobalBounds().top + 710.f);
+    ricardo.setPosition(_parent.background.getGlobalBounds().left + 400.f,_parent.background.getGlobalBounds().top + 700.f);
+    billy.setPosition(_parent.background.getGlobalBounds().left + 400.f,_parent.background.getGlobalBounds().top + 700.f);
 
     if(log.begin() == log.end()) return;
 

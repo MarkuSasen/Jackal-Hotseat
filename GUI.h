@@ -155,6 +155,9 @@ public:
     std::list<sf::Text> log;
 
     void updatelog(const char* s,...);
+
+    sf::Sprite mark,van,ricardo,billy;
+
 private:
 
 } * _info;

@@ -622,19 +622,22 @@ sounds->playshakal();
 
                 window.draw(backgr);
                 cell->draw(window, RenderStates(grid_transform));
-                window.draw(mousePos);
+
         for(int i = 0; i < players_; i++){
                 PLAYERS[i]->update(time);
                 PLAYERS[i]->draw(window,RenderStates(grid_transform));
         }
 
-                window.draw(Prevcoord);
-                window.draw(newcoord);
-
         window.setView(mainView);
-
+        switch (you->getID()%4)
+        {
+            case 0: window.draw(gui._info->van); break;
+            case 1: window.draw(gui._info->mark); break;
+            case 2: window.draw(gui._info->billy); break;
+            case 3: window.draw(gui._info->ricardo); break;
+            default: break;
+        }
         window.draw(gui);
-
         window.display();
 
     }
